@@ -107,7 +107,62 @@ raster::plotRGB(rgb_ras, r=1, g=2, b=3, stretch="lin")
 box(lwd=2.2)
 points(example_kg_points, pch=20, col="blue", cex=2)
 dev.off()
+
+pdf(file.path(outdir,paste0(gsub(".tif","",chm_raster_name),"_points.pdf")), height=9, width=11)
+terra::plot(chm_ras, legend=TRUE, axes=TRUE, smooth=FALSE,range=c(0,315),
+            col=topo.colors(35), plg=list(x="topright",cex=1,title="CHM (m) x 100"),
+            pax=list(sides=c(1,2), cex.axis=1.2),
+            mar=c(2,2,3,5.5)) # b, l, t, r
+box(lwd=2.2)
+points(example_kg_points, pch=20, col="black", cex=2)
+dev.off()
+
+
+# extract data
+chm.data <- terra::extract(chm_ras, terra::vect(example_kg_points))
+chm.data[,2] <- chm.data[,2]*0.01
+tir.data <- terra::extract(tir_ras, terra::vect(example_kg_points))
+tir.data[,2] <- tir.data[,2]*0.1
 #--------------------------------------------------------------------------------------------------#
 
 
+#--------------------------------------------------------------------------------------------------#
+# plot point data
+hist(chm.data[,2],freq=T, xlab="CHM (meters)",main="")
 
+pdf(file.path(outdir,"CHM_hist.pdf"), height=6, width=12)
+par(mar=c(5,5,1,1)) #b, l, t, r
+hist(chm.data[,2],freq=T, xlab="CHM (meters)",main="", cex.axis=2,
+     cex.lab=1.5)
+box(lwd=2.2)
+dev.off()
+
+hist(tir.data[,2],freq=T, xlab="Tsurf (degC)",main="")
+
+pdf(file.path(outdir,"CHM_vs_TIR.pdf"), height=9, width=11)
+par(mar=c(5,5,1,1)) #b, l, t, r
+plot(chm.data[,2],tir.data[,2], ylab="Tsurf (deg C)", xlab="CHM (meters)",
+     cex.axis=1.4,cex.lab=1.8, pch=21, bg="grey50", cex=2)
+box(lwd=2.2)
+dev.off()
+
+#--------------------------------------------------------------------------------------------------#
+
+
+#--------------------------------------------------------------------------------------------------#
+# example subset
+site.area <- cbind(lon = c(508210, 508260), 
+                   lat = c(7226820.0,7226750.0))
+site.area <- terra::vect(site.area, type="polygon", crs="+init=epsg:32603") 
+site.area
+
+# this may take awhile
+sub.ras <- terra::crop(rgb_ras, site.area)
+
+pdf(file.path(outdir,paste0(gsub(".tif","",rgb_raster_name),"_subset.pdf")), height=9, width=11)
+raster::plotRGB(sub.ras, r=1, g=2, b=3, stretch="lin")
+box(lwd=2.2)
+dev.off()
+#--------------------------------------------------------------------------------------------------#
+
+### EOF
